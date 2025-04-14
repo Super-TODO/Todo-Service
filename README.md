@@ -5,16 +5,16 @@ The Entity-Relationship Diagram (ERD) for the Todo Service, which includes the `
 
 ```mermaid
 erDiagram
-    ITEMS ||--o{ ITEMS_DETAILS : has
+    ITEMS ||--o{ ITEM_DETAILS : has
 
     ITEMS {
         bigint id PK "Auto-incremented"
         varchar title "Todo item title"
         bigint user_id FK "References user(id) in User Service"
-        bigint item_details_id FK "References items_details(id)"
+        bigint item_details_id FK "References item_details(id)"
     }
 
-    ITEMS_DETAILS {
+    ITEM_DETAILS {
         bigint id PK "Auto-incremented"
         varchar description "Item description"
         datetime created_at "Creation timestamp"
