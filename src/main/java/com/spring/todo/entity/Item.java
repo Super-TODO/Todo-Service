@@ -17,12 +17,17 @@ public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private long id;
+
     private String title;
 
     private long userId;
 
     @OneToOne(cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
-    private ItemDetails itemDetailsId;
+    @JoinColumn(name = "item_details_id", referencedColumnName = "id")
+    private ItemDetails itemDetails;
+
+
 }
