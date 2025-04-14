@@ -18,7 +18,9 @@ erDiagram
         bigint id PK "Auto-incremented"
         varchar description "Item description"
         datetime created_at "Creation timestamp"
-        varchar priority "e.g., HIGH, MEDIUM, LOW"
-        varchar status "e.g., TODO, IN_PROGRESS, DONE"
+        datetime modified_at "Last modified timestamp"
+        enum priority "HIGH, MEDIUM, LOW"
+        enum status "IN_PROGRESS, DONE, PENDING, CANCELLED"
     }
+
 ```
