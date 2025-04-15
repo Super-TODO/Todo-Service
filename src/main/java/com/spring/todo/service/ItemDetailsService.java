@@ -1,5 +1,6 @@
 package com.spring.todo.service;
 
+import com.spring.todo.dto.ItemDetailsResponseDTO;
 import com.spring.todo.entity.ItemDetails;
 import com.spring.todo.exception.NotFoundException;
 import com.spring.todo.repository.ItemDetailsRepository;
@@ -13,16 +14,32 @@ import org.springframework.stereotype.Service;
 public class ItemDetailsService {
 
     private final ItemDetailsRepository itemDetailsRepo;
-    public ItemDetails updateStatus(long detailsId, Status status) {
+    public ItemDetailsResponseDTO updateStatus(long detailsId, Status status) {
         ItemDetails details = itemDetailsRepo.findById(detailsId)
                 .orElseThrow(() -> new NotFoundException("Details Not Found"));
         details.setStatus(status);
-        return itemDetailsRepo.save(details);
+       ItemDetails updated= itemDetailsRepo.save(details);
+        return mapToResponse(updated);
     }
-    public ItemDetails updatePriority(Long id, Priority priority) {
+    public ItemDetailsResponseDTO updatePriority(Long id, Priority priority) {
         ItemDetails details = itemDetailsRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("ItemDetails not found"));
         details.setPriority(priority);
-        return itemDetailsRepo.save(details);
+        ItemDetails updated = itemDetailsRepo.save(details);
+        return mapToResponse(updated);
     }
+
+
+    // Method to map ItemDetails entity to ItemDetailsResponseDTO
+    public ItemDetailsResponseDTO mapToResponse(ItemDetails details) {
+        return new ItemDetailsResponseDTO(
+                details.getId(),
+                details.getDescription(),
+                details.getStatus(),
+                details.getPriority(),
+                details.getCreatedAt(),
+                details.getUpdatedAt()
+        );
+    }
+
 }

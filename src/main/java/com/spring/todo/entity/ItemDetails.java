@@ -37,4 +37,8 @@ public class ItemDetails {
     @Column
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "itemDetails")
+    private Item item;
+
 }

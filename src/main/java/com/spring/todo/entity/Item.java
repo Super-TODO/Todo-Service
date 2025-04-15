@@ -6,18 +6,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.validation.annotation.Validated;
 
 @Entity
 @Table(name = "items")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private long id;
 
     private String title;
@@ -29,5 +28,9 @@ public class Item {
     @JoinColumn(name = "item_details_id", referencedColumnName = "id")
     private ItemDetails itemDetails;
 
-
+    public Item(String title, long userId, ItemDetails itemDetails) {
+        this.title = title;
+        this.userId = userId;
+        this.itemDetails = itemDetails;
+    }
 }
