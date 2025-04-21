@@ -50,5 +50,6 @@ The ToDo Service is a clean and reliable task management system. It lets you add
   *Solution:* I built a separate data plan called `ItemUpdateDTO` so that only the provided fields are updated.
 
 
+  
 ![Swagger UI Screenshot](https://github.com/Super-TODO/Todo-Service/blob/main/Swagger-ui.png)
 
