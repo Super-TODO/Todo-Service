@@ -21,7 +21,7 @@ public class Item {
 
     private String title;
 
-    private long userId;
+    private Long userId;
 
     @OneToOne(cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)

@@ -20,33 +20,40 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
 
-    public ItemResponseDTO updateItem(ItemUpdateDTO dto){
-        Item existingItem = getItemById(dto.getId());
+        public ItemResponseDTO updateItem(ItemUpdateDTO dto, Long userIdFromToken){
+            Item existingItem = getItemById(dto.getId());
 
-        // Update only the fields that are not null in the DTO
-        if(dto.getTitle() != null) {
-            existingItem.setTitle(dto.getTitle());
+            if (!existingItem.getUserId().equals(userIdFromToken)) {
+                throw new SecurityException("You are not authorized to update this item");
+            }
+
+            // ✅ Proceed with update
+            if (dto.getTitle() != null) {
+                existingItem.setTitle(dto.getTitle());
+            }
+
+            ItemDetails details = existingItem.getItemDetails();
+            if (details == null) {
+                details = new ItemDetails();
+                existingItem.setItemDetails(details);
+            }
+
+            if (dto.getDescription() != null) {
+                details.setDescription(dto.getDescription());
+            }
+
+            if (dto.getStatus() != null) {
+                details.setStatus(dto.getStatus());
+            }
+
+            if (dto.getPriority() != null) {
+                details.setPriority(dto.getPriority());
+            }
+
+            Item saved = itemRepository.save(existingItem);
+            return mapToResponse(saved);
         }
-        if(dto.getUserId() != null) {
-            existingItem.setUserId(dto.getUserId());
-        }
-        ItemDetails details = existingItem.getItemDetails();
-        if(details == null) {
-            details = new ItemDetails();
-            existingItem.setItemDetails(details);
-        }
-        if(dto.getDescription() != null) {
-            details.setDescription(dto.getDescription());
-        }
-        if(dto.getStatus() != null) {
-            details.setStatus(dto.getStatus());
-        }
-        if(dto.getPriority() != null) {
-            details.setPriority(dto.getPriority());
-        }
-        Item item=itemRepository.save(existingItem);
-        return mapToResponse(item);
-    }
+
     public Item getItemById(long id){
         return itemRepository.findById(id).orElseThrow(()-> new NotFoundException("No Item Found With "+id +" id"));
     }
@@ -55,12 +62,19 @@ public class ItemService {
         return itemRepository.findAll();
     }
 
-    public void deleteItemById(long id){
-        if (!itemRepository.existsById(id)) {
+    public void deleteItemById(long id,Long userIdFromToken) {
+        Item item = getItemById(id);
+        if (item == null)
             throw new NotFoundException("Item with ID " + id + " not found!");
-        } itemRepository.deleteById(id);
-    }
-    public List<Item> searchByTitle(String title){
+
+        if (!item.getUserId().equals(userIdFromToken))
+                throw new SecurityException("You are not authorized to delete this item");
+
+            itemRepository.deleteById(id);
+        }
+
+
+            public List<Item> searchByTitle(String title){
         return itemRepository.findByTitleContainingIgnoreCase(title);
     }
     public List<Item> filterByStatus(Status status){

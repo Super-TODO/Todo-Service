@@ -8,6 +8,7 @@ import com.spring.todo.dto.ItemUpdateDTO;
 import com.spring.todo.entity.Item;
 import com.spring.todo.service.ItemDetailsService;
 import com.spring.todo.service.ItemService;
+import com.spring.todo.utils.JwtUtil;
 import com.spring.todo.utils.Priority;
 import com.spring.todo.utils.Status;
 import jakarta.validation.Valid;
@@ -26,8 +27,14 @@ public class ItemController {
     private final ItemService itemService;
 
     private final ItemDetailsService itemDetailsService;
+    private final JwtUtil jwtUtil;
+
     @PostMapping
-    public ResponseEntity<ItemResponseDTO>addItem(@Valid @RequestBody ItemRequestDTO item){
+    public ResponseEntity<ItemResponseDTO>addItem(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody ItemRequestDTO item){
+        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        item.setUserId(userId);
 
         Item savedItem = itemService.mapAndSave(item);
         return ResponseEntity.status(HttpStatus.CREATED).body(itemService.mapToResponse(savedItem));
@@ -37,6 +44,17 @@ public class ItemController {
     public ResponseEntity<ItemResponseDTO> getItem(@PathVariable long id){
         Item item = itemService.getItemById(id);
         return ResponseEntity.ok(itemService.mapToResponse(item));
+    }
+    @GetMapping("/my-items")
+    public ResponseEntity<List<ItemResponseDTO>> getMyItems(
+            @RequestHeader("Authorization") String authHeader) {
+        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        return ResponseEntity.ok(
+                itemService.searchByUserId(userId)
+                        .stream()
+                        .map(itemService::mapToResponse)
+                        .toList()
+        );
     }
 
     @GetMapping
@@ -49,14 +67,24 @@ public class ItemController {
     }
 
     @PutMapping
-    public ResponseEntity<ItemResponseDTO> updateItem(@Valid @RequestBody ItemUpdateDTO item){
-        return ResponseEntity.ok(itemService.updateItem(item));
+    public ResponseEntity<ItemResponseDTO> updateItem(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody ItemUpdateDTO item) {
+
+        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        return ResponseEntity.ok(itemService.updateItem(item, userId));
     }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void>deleteItem(@PathVariable long id){
-        itemService.deleteItemById(id);
+    public ResponseEntity<Void> deleteItem(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable long id) {
+
+        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        itemService.deleteItemById(id, userId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
     @GetMapping("/search")
     public ResponseEntity<List<ItemResponseDTO>> searchByTitle(@RequestParam String title){
         return ResponseEntity.ok(
@@ -86,17 +114,6 @@ public class ItemController {
                         .toList()
         );
     }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ItemResponseDTO>> searchByUserId(@PathVariable Long userId){
-        return ResponseEntity.ok(
-                itemService.searchByUserId(userId)
-                        .stream()
-                        .map(itemService::mapToResponse)
-                        .toList()
-        );
-    }
-
     @GetMapping("/order/createdAt")
     public ResponseEntity<List<ItemResponseDTO>> orderByCreatedAt(){
         return ResponseEntity.ok(
