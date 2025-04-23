@@ -27,7 +27,6 @@ public class ItemService {
                 throw new SecurityException("You are not authorized to update this item");
             }
 
-            // ✅ Proceed with update
             if (dto.getTitle() != null) {
                 existingItem.setTitle(dto.getTitle());
             }
