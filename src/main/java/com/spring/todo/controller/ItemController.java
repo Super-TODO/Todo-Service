@@ -22,6 +22,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/items")
+@CrossOrigin(origins = "*")
 public class ItemController {
 
     private final ItemService itemService;
