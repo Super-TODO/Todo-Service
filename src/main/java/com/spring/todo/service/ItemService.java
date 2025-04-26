@@ -1,5 +1,6 @@
 package com.spring.todo.service;
 
+import com.spring.todo.config.ModelMapperConfig;
 import com.spring.todo.dto.ItemRequestDTO;
 import com.spring.todo.dto.ItemResponseDTO;
 import com.spring.todo.dto.ItemUpdateDTO;
@@ -7,9 +8,13 @@ import com.spring.todo.entity.Item;
 import com.spring.todo.entity.ItemDetails;
 import com.spring.todo.exception.NotFoundException;
 import com.spring.todo.repository.ItemRepository;
+import com.spring.todo.utils.PageResponse;
 import com.spring.todo.utils.Priority;
 import com.spring.todo.utils.Status;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,9 +24,10 @@ import java.util.List;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final ModelMapper mapper;
 
-        public ItemResponseDTO updateItem(ItemUpdateDTO dto, Long userIdFromToken){
-            Item existingItem = getItemById(dto.getId());
+    public ItemResponseDTO updateItem(Long id,ItemUpdateDTO dto, Long userIdFromToken){
+            Item existingItem = getItemById(id);
 
             if (!existingItem.getUserId().equals(userIdFromToken)) {
                 throw new SecurityException("You are not authorized to update this item");
@@ -52,16 +58,24 @@ public class ItemService {
             Item saved = itemRepository.save(existingItem);
             return mapToResponse(saved);
         }
-
     public Item getItemById(long id){
         return itemRepository.findById(id).orElseThrow(()-> new NotFoundException("No Item Found With "+id +" id"));
     }
 
-    public List<Item> getAllItems(){
-        return itemRepository.findAll();
-    }
+    public PageResponse<ItemResponseDTO> getAllItems(Pageable pageable) {
+        Page<Item> page = itemRepository.findAll(pageable);
+        List<ItemResponseDTO> content = page
+                .map(this::mapToResponse)
+                .getContent();
 
-    public void deleteItemById(long id,Long userIdFromToken) {
+        return new PageResponse<>(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }    public void deleteItemById(long id,Long userIdFromToken) {
         Item item = getItemById(id);
         if (item == null)
             throw new NotFoundException("Item with ID " + id + " not found!");
@@ -71,9 +85,21 @@ public class ItemService {
 
             itemRepository.deleteById(id);
         }
+    public PageResponse<ItemResponseDTO> getMyItems(Long userId, Pageable pageable) {
+        Page<Item> page = itemRepository.findByUserId(userId, pageable);
+        List<ItemResponseDTO> content = page
+                .map(this::mapToResponse)
+                .getContent();
 
-
-            public List<Item> searchByTitle(String title){
+        return new PageResponse<>(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
+        public List<Item> searchByTitle(String title){
         return itemRepository.findByTitleContainingIgnoreCase(title);
     }
     public List<Item> filterByStatus(Status status){
@@ -81,9 +107,6 @@ public class ItemService {
     }
     public List<Item> filterByPriority(Priority priority){
         return itemRepository.findByItemDetails_Priority(priority);
-    }
-    public List<Item> searchByUserId(Long userId){
-        return itemRepository.findByUserId(userId);
     }
     public List<Item> orderByCreatedAt(){
         return itemRepository.findAllByOrderByItemDetails_CreatedAtDesc();

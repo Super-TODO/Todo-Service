@@ -9,10 +9,14 @@ import com.spring.todo.entity.Item;
 import com.spring.todo.service.ItemDetailsService;
 import com.spring.todo.service.ItemService;
 import com.spring.todo.utils.JwtUtil;
+import com.spring.todo.utils.PageResponse;
 import com.spring.todo.utils.Priority;
 import com.spring.todo.utils.Status;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,33 +51,34 @@ public class ItemController {
         return ResponseEntity.ok(itemService.mapToResponse(item));
     }
     @GetMapping("/my-items")
-    public ResponseEntity<List<ItemResponseDTO>> getMyItems(
-            @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<PageResponse<ItemResponseDTO>> getMyItems(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Long userId = jwtUtil.extractUserId(authHeader.substring(7));
-        return ResponseEntity.ok(
-                itemService.searchByUserId(userId)
-                        .stream()
-                        .map(itemService::mapToResponse)
-                        .toList()
-        );
+        size = Math.min(size, 50);
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by("itemDetails.createdAt").descending());
+        return ResponseEntity.ok(itemService.getMyItems(userId, pageable));
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemResponseDTO>> getItems(){
-        List<ItemResponseDTO> items = itemService.getAllItems()
-                .stream()
-                .map(itemService::mapToResponse)
-                .toList();
-        return ResponseEntity.ok(items);
+    public PageResponse<ItemResponseDTO> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        size = Math.min(size, 50);
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by("itemDetails.createdAt").descending());
+        return itemService.getAllItems(pageable);
     }
-
-    @PutMapping
+    @PutMapping("/{id}")
     public ResponseEntity<ItemResponseDTO> updateItem(
+            @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader,
             @Valid @RequestBody ItemUpdateDTO item) {
 
         Long userId = jwtUtil.extractUserId(authHeader.substring(7));
-        return ResponseEntity.ok(itemService.updateItem(item, userId));
+        return ResponseEntity.ok(itemService.updateItem(id, item, userId));
     }
 
     @DeleteMapping("/{id}")
